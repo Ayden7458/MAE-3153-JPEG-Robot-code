@@ -1,0 +1,7 @@
+echo "# MAE-3153-JPEG-Robot-code" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/Ayden7458/MAE-3153-JPEG-Robot-code.git
+git push -u origin main
