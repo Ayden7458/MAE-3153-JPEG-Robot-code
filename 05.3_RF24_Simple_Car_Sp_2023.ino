@@ -19,6 +19,7 @@ u32 lastNrfUpdateTime = 0;
 
 void setup() {
   pinsSetup();
+  servo1.attach(PIN_SERVO);
   if (!nrf24L01Setup()) {
     alarm(3, 2);
   }
