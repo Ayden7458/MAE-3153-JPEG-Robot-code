@@ -69,7 +69,7 @@ void updateCarActionByNrfRemote() {
 
   leftmotor = (forward + rightturn) / 2;
   rightmotor = (forward - rightturn) / 2;
-    
+   
   motorRun(leftmotor, rightmotor);
 
   if (nrfDataRead[4] == 0) {

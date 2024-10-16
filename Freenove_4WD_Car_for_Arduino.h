@@ -33,7 +33,7 @@
 #define PIN_TRACKING_LEFT	  A1
 #define PIN_TRACKING_CENTER	A2
 #define PIN_TRACKING_RIGHT	A3
-#define MOTOR_PWM_DEAD	    5
+#define MOTOR_PWM_DEAD	    0
 
 #define BAT_VOL_STANDARD	7.0
 
