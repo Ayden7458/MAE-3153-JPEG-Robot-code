@@ -14,7 +14,7 @@ RF24 radio(9, 10);                // define the object to control NRF24L01
     // I suggest "TM0xx" where xx is your team number  ex:  TM001, TM014
 const byte addresses[6] = "TM03";// define communication address which should correspond to remote control
     // Radio Channel: each team should choose a unique channel number between 20 and 127
-    // I suggest you use:   (TeamNumber * 5) + 15  ex:  team 4 would use channel 35
+    // I suggest you use:   (TeamNumber * 5) + 15  ex:  team  would use channel 35
 const int RF24channel =  30; 
 
 // wireless communication
