@@ -106,6 +106,7 @@ void loop() {
         screenPrint(4,1," ");   
         alarm(2, 1);  
         servo1.write(SERVO_STOP);
+        nrfDataRead[4] = 1;
       }  
     }
 
