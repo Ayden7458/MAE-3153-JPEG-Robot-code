@@ -15,7 +15,7 @@ RF24 radio(9, 10);                // define the object to control NRF24L01
 const byte addresses[6] = "TM03";// define communication address which should correspond to remote control
     // Radio Channel: each team should choose a unique channel number between 20 and 127
     // I suggest you use:   (TeamNumber * 5) + 15  ex:  team 4 would use channel 35
-const int RF24channel =  30; 
+const int RF24channel =  35; 
 
 // wireless communication
 int dataWrite[8];                 // define array used to save the write data
@@ -43,7 +43,10 @@ void setup() {
   radio.setChannel(RF24channel);  
   radio.stopListening();              // stop listening for incoming messages
   
-// pin
+  // Serial setup for debugging
+  Serial.begin(9600);
+  
+  // Pin setup
   pinMode(joystickZPin, INPUT);       // set led1Pin to input mode
   pinMode(s1Pin, INPUT);              // set s1Pin to input mode
   pinMode(s2Pin, INPUT);              // set s2Pin to input mode
@@ -55,20 +58,26 @@ void setup() {
 
 void loop()
 {
-  // put the values of rocker, switch and potentiometer into the array
+  // put the values of rocker, switch, and potentiometer into the array
   dataWrite[0] = analogRead(pot1Pin); // save data of Potentiometer 1
   dataWrite[1] = analogRead(pot2Pin); // save data of Potentiometer 2
   dataWrite[2] = analogRead(joystickXPin);  // save data of direction X of joystick
   dataWrite[3] = analogRead(joystickYPin);  // save data of direction Y of joystick
   dataWrite[4] = digitalRead(joystickZPin); // save data of direction Z of joystick
-  dataWrite[5] = digitalRead(s1Pin);        // save data of switch 1
-  dataWrite[6] = digitalRead(s2Pin);        // save data of switch 2
+  dataWrite[5] = digitalRead(s1Pin);        // save data of switch 1 (S1)
+  dataWrite[6] = digitalRead(s2Pin);        // save data of switch 2 (S2)
   dataWrite[7] = digitalRead(s3Pin);        // save data of switch 3
+
+  // Debugging: print S1 and S2 button states
+  Serial.print("S1: ");
+  Serial.print(dataWrite[5]);
+  Serial.print(" | S2: ");
+  Serial.println(dataWrite[6]);
 
   // write radio data
   if (radio.writeFast(&dataWrite, sizeof(dataWrite)))  // if communication link is successful
   {
-    digitalWrite(led3Pin, HIGH);  //  
+    digitalWrite(led3Pin, HIGH);  
   }
   else {
     digitalWrite(led3Pin, LOW);
@@ -80,22 +89,13 @@ void loop()
     radio.openReadingPipe(1, addresses);// open a pipe for reading
     radio.setChannel(RF24channel);      
     radio.stopListening();   
-   
   }
+  
   delay(20);
 
   // make LED emit different brightness of light according to analog of potentiometer
   analogWrite(led1Pin, map(dataWrite[0], 0, 1023, 0, 255));
   analogWrite(led2Pin, map(dataWrite[1], 0, 1023, 0, 255));
-  // Read button states
-    int button1State = digitalRead(BUTTON1_PIN);
-    int button2State = digitalRead(BUTTON2_PIN);
-    
-    // Prepare data to send
-    nrfDataWrite = button1State;
-    nrfDataWrite = button2State;
-    
-    // Send data to the robot
-    sendNrf24L01Data();
- 
 }
+
+
