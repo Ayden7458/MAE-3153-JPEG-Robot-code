@@ -70,7 +70,7 @@ Servo servo1;
 
 #define AUTO_MODE_END_AUTO 20
 
-#define SERVO_STOP 91
+#define SERVO_STOP 90
 
 int mode, automode, autokey, start_time, current_time, delta_time;
 
@@ -191,11 +191,11 @@ void manual() {
   float servospeed = nrfDataRead[0] /1023.0;  // 1023.0 not 1023 
   //Serial.println(servospeed);
   if (nrfDataRead[5] == 0 ) {
-    servo1.write( int(91 + servospeed * 36));  // servo reaches max  positive speed at 127
+    servo1.write( int(90 + servospeed * 36));  // servo reaches max  positive speed at 127
   }  else if (nrfDataRead[6] == 0 ) {
-    servo1.write(int(91 - servospeed * 32));  // servo reaches max  negative speed at 63
+    servo1.write(int(90 - servospeed * 32));  // servo reaches max  negative speed at 63
   } else {
-    servo1.write(91); //servo stops at 91
+    servo1.write(90); //servo stops at 90
   }
 }
 
