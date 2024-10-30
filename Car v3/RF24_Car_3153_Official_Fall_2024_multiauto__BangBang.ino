@@ -186,14 +186,19 @@ void manual() {
   //handle the servo
   float servospeed = nrfDataRead[0] /1023.0;  // 1023.0 not 1023 
   //Serial.println(servospeed);
-  if (nrfDataRead[5] == 0 ) {
-    servo1.write( int(91 + servospeed * 36));  // servo reaches max  positive speed at 127
-  }  else if (nrfDataRead[6] == 0 ) {
-    servo1.write(int(91 - servospeed * 32));  // servo reaches max  negative speed at 63
-  } else {
-    servo1.write(91); //servo stops at 91
+ if (nrfDataRead[5] == 0) {
+      // Rotate clockwise while S1 is held
+      servo1.write(180);  // Signal for continuous rotation clockwise
+    } 
+    else if (nrfDataRead[6] == 0) {
+      // Rotate counterclockwise while S2 is held
+      servo1.write(-180);  // Signal for continuous rotation counterclockwise
+    } 
+    else {
+      // Stop the servo when no buttons are pressed
+      servo1.write(90);  // Neutral signal to stop the continuous rotation
+    }
   }
-}
 
 
 void autonomous_scheduler(int now) {
