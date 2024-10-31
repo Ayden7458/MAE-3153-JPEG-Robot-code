@@ -1,9 +1,9 @@
 /**********************************************************************
   Filename    : RF24_Remote_Car.ino
   Product     : Freenove 4WD Car for UNO
-  Description : A RF24 Remote Car.
+  Description : new code 10.31.20241
   Auther      : www.freenove.com
-  Modification: 2020/11/27
+  Modification: 2024/10/31
 **********************************************************************/
 #include "Freenove_4WD_Car_for_Arduino.h"
 #include "RF24_Remote.h"
@@ -25,21 +25,24 @@ void setupScreen() {
 }
 
 void clearScreen() {
+  I2C_select(3);
   oled.clear();
 }
 
 void screenPrint(int row, int col, char* value) {
+  I2C_select(3);
   oled.clearField((col - 1) *11, (row - 1) * 2, 12);    
   oled.print(value);
 }
 
-void printVoltage(int row,int col) {
-  getBatteryVoltage();  
+void screenPrintNum(int row,int col, int width, int places, float val) {
+  I2C_select(3);
   char buffer[6];
-  dtostrf(batteryVoltage,4,2,buffer);
+  dtostrf(val,width,places,buffer);
   screenPrint(row,col,buffer);  
-  screenPrint(row,col+5,"Volts");
 }
+
+
 
 
 #include <Servo.h>
@@ -86,98 +89,45 @@ void setup() {
   mode = MODE_MANUAL;  //RDD
 
   setupScreen();   //RDD  Setup screen and print the group number and battery voltage
-  screenPrint(1,3,"Group 11");
-  printVoltage(2,1);
-  screenPrint(3,1,"Mode: Manual");
+  setup_distance_sensors(); 
+  setupScreen();
+  clearScreen();
+  screenPrint(1, 1, "Sensors");
   setup_distance_sensors(); 
 }
 
-
+int counter = 0;
 void loop() {
+  int i;
 
-  if (getNrf24L01Data()) {  //if radio data was received
-    clearNrfFlag();
-  
-    if (mode == MODE_STOP  ) {
-      servo1.write(SERVO_STOP);
-      motorRun(0,0);
+  // Read and print distance sensor data
+  read_distance_sensors(); 
 
-      if (nrfDataRead[5] == 0) {
-        mode = MODE_AUTO;
-        autokey = 1;              
-        automode = AUTO_MODE_STOP;
-
-        printVoltage(2,1);
-        screenPrint(3,1,"Mode: Auto1");        
-        alarm(1, 1);     
-        start_time = millis();
-      }  
-      if (nrfDataRead[6] == 0) {
-        mode = MODE_AUTO;
-        autokey = 2;              
-        automode = AUTO_MODE_STOP;
-
-        printVoltage(2,1);
-        screenPrint(3,1,"Mode: Auto2");        
-        alarm(1, 1);     
-        start_time = millis();
-      }  
-      if (nrfDataRead[7] == 0) {
-        mode = MODE_AUTO;
-        autokey = 3;              
-        automode = AUTO_MODE_STOP;
-
-        printVoltage(2,1);
-        screenPrint(3,1,"Mode: Auto3");        
-        alarm(1, 1);     
-        start_time = millis();
-     }  
-      if (nrfDataRead[4] == 0) {
-        mode = MODE_MANUAL;
-         printVoltage(2,1);
-        screenPrint(3,1,"Mode: Manual"); 
-        screenPrint(4,1," ");   
-        alarm(2, 1);  
-      }  
+  // Display sensor data on OLED every few loops to reduce screen flicker
+  counter++;
+  if (counter == 5) {
+    counter = 0;
+    for (i = 0; i < N_DIST_SENSORS; i++){
+      screenPrintNum(i+2, 2, 6, 0, distances[i]); // Update display with sensor distances
     }
-
-    if (mode == MODE_AUTO){
-      current_time = millis();
-      delta_time = current_time - start_time;
-
-      if (delta_time < MAX_AUTO_TIME) {
-        autonomous_scheduler(delta_time);
-      } else {
-        mode = MODE_MANUAL;
-        printVoltage(2,1);
-        screenPrint(3,1,"Mode: Manual"); 
-        screenPrint(4,1," ");          
-        alarm(2, 1);            
-      }
-    }
-
-    if (mode == MODE_MANUAL  ) {
-      //the joystick controls the servo positions
-      if (nrfDataRead[4] == 0) {
-        mode = MODE_STOP;
-        printVoltage(2,1);
-        screenPrint(3,1,"Mode: Stop"); 
-        screenPrint(4,1," ");   
-        alarm(3, 1);  
-        servo1.write(SERVO_STOP);
-      }
-      manual();
-    }
-
-    lastNrfUpdateTime = millis();
   }
 
-  if (millis() - lastNrfUpdateTime > NRF_UPDATE_TIMEOUT) {
-    lastNrfUpdateTime = millis();
-    resetNrfDataBuf();
-    updateCarActionByNrfRemote();
+  // Check for RF data and control car movement
+  if (getNrf24L01Data()) {
+    clearNrfFlag();
+
+    if (mode == MODE_MANUAL) {
+      manual(); // Calls function to control the car
+    } else if (mode == MODE_STOP) {
+      servo1.write(SERVO_STOP);
+      motorRun(0,0);  // Stop motors
+    }
+
+    lastNrfUpdateTime = millis(); // Reset timer for data update check
   }
 }
+
+
 
 
 void manual() {
@@ -186,130 +136,15 @@ void manual() {
   //handle the servo
   float servospeed = nrfDataRead[0] /1023.0;  // 1023.0 not 1023 
   //Serial.println(servospeed);
- if (nrfDataRead[5] == 0) {
-      // Rotate clockwise while S1 is held
-      servo1.write(180);  // Signal for continuous rotation clockwise
-    } 
-    else if (nrfDataRead[6] == 0) {
-      // Rotate counterclockwise while S2 is held
-      servo1.write(-180);  // Signal for continuous rotation counterclockwise
-    } 
-    else {
-      // Stop the servo when no buttons are pressed
-      servo1.write(90);  // Neutral signal to stop the continuous rotation
-    }
+  if (nrfDataRead[5] == 0 ) {
+    servo1.write( int(91 + servospeed * 36));  // servo reaches max  positive speed at 127
+  }  else if (nrfDataRead[6] == 0 ) {
+    servo1.write(int(91 - servospeed * 32));  // servo reaches max  negative speed at 63
+  } else {
+    servo1.write(91); //servo stops at 91
   }
+}  
 
 
-void autonomous_scheduler(int now) {
-  int endtime_prev = 0;
-  switch (autokey) {
-    case 1:
-   
-     //                            mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 8000);
-      endtime_prev = do_auto(AUTO_MODE_SHAKE,         now,  endtime_prev, 3000);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,  now,  endtime_prev, 2000);
-      break;
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev,      1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_BACKWARD,  now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_RIGHTTURN, now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_LEFTTURN,  now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_SERVO_POS, now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_SERVO_NEG, now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 500);
-      break;
-    case 2:
-        //                    mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_READ_OFFSETS,     now,  endtime_prev, 3000);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,      now,  endtime_prev, 2000);
-      break;  
-
- //                    mode        current_time  start   duration
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD,  now,  endtime_prev,60);
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 12000);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,          now,  endtime_prev, 500);
-      // endtime_prev = do_auto(AUTO_MODE_END_AUTO,      now,  endtime_prev, 1000);
-
-      // endtime_prev = do_auto(AUTO_MODE_BACKWARD,   now,  endtime_prev, 500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,       now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD,    now,  endtime_prev,      500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,       now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_END_AUTO,   now,  endtime_prev, 1000);
-      break;
-
-    case 3:
-     //                    mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_GO_STRAIGHT_DIST,     now,  endtime_prev, 10000);
-      endtime_prev = do_auto(AUTO_MODE_STOP,             now,  endtime_prev, 60);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,         now,  endtime_prev, 2000);
-      break;  
-  }
- 
-}
-
-int do_auto(int automode, int current_time,  int start_time, int duration) {
-
-  int stop_time = start_time + duration;
-
-  if (current_time > start_time  &&   current_time < stop_time)
-
-  switch (automode) {
-  case AUTO_MODE_STOP:
-      motorRun(0, 0);
-      servo1.write(SERVO_STOP);
-      break;
-  case AUTO_MODE_FORWARD:
-      motorRun(100, 70);
-      break;
-  case AUTO_MODE_FORWARD_SLOW:
-      motorRun(LEFT_SLOW, RIGHT_SLOW);
-      break;
-  case AUTO_MODE_BACKWARD:
-      motorRun(-150, -150);
-      break;
-  case AUTO_MODE_RIGHTTURN:
-      motorRun(200, -200);
-      break;
-  case AUTO_MODE_LEFTTURN:
-      motorRun(-185, 185);
-      break;
-  case AUTO_MODE_SERVO_POS:
-      motorRun(0, 0);
-      servo1.write(180);
-      break;
-  case AUTO_MODE_SERVO_NEG:
-      motorRun(0, 0);
-      servo1.write(0);
-      break;
-  case AUTO_MODE_GO_STRAIGHT_DIST:
-      gostraightDistance(dstart); 
-      break;
-  case AUTO_MODE_READ_OFFSETS:
-      read_calibration_offset();
-      break;
-  case AUTO_MODE_READ_DISTANCE:
-      read_distance_sensors();
-      break;
-  case AUTO_MODE_SHAKE:
-      shake();
-      break;
-  case AUTO_MODE_END_AUTO:
-      motorRun(0, 0);
-      servo1.write(SERVO_STOP);
-      mode = MODE_MANUAL;
-      printVoltage(2,1);
-      screenPrint(3,1,"Mode: Manual"); 
-      screenPrint(4,1," ");          
-      alarm(2, 1);               
-      break;
-  }  
-  return stop_time;
-}
 
 
