@@ -1,0 +1,32 @@
+#define variables 
+theta-m == (actual integer value)
+rf2desired = integer value
+rf1 = read from sensors
+rf2 = read from sensors
+x = rf2desired - rf2
+xc1 = (set integer value)
+xc2 = (set integer value, close to zero most likely)
+x2 = xc2 - rf2
+D = constant (distance between sensors)
+D1 = rf2( 1 - pow((( rf1 - rf2 ) / D ), 2) )
+theta-c = acos( D1 / rf2 ) 
+
+
+//LOOP WHOLE THING
+if (theta-m == theta-c){
+  //idk how to read from the sensors? but that would happen here rf1 and rf2
+  if rf2 == xc2
+    stop
+  else
+    motorRun(150, 150); 
+//need to loop this or run this until its equal
+else { 
+if (theta-c > theta-m); {
+  motorRun(200, -200); 
+}
+else {
+  motorRun(-200, 200);
+}
+
+
+I need help <3 
