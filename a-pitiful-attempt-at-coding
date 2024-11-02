@@ -7,7 +7,7 @@ x = rf2desired - rf2
 xc1 = (set integer value)
 xc2 = (set integer value, close to zero most likely)
 x2 = xc2 - rf2
-D = constant (distance between sensors)
+D = 5.625
 D1 = rf2( 1 - pow((( rf1 - rf2 ) / D ), 2) )
 theta-c = acos( D1 / rf2 ) 
 
