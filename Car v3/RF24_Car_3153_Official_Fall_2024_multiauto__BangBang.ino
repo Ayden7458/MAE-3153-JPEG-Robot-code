@@ -1,10 +1,4 @@
-/**********************************************************************
-  Filename    : RF24_Remote_Car.ino
-  Product     : Freenove 4WD Car for UNO
-  Description : new code 10.31.20241
-  Auther      : www.freenove.com
-  Modification: 2024/10/31
-**********************************************************************/
+
 #include "Freenove_4WD_Car_for_Arduino.h"
 #include "RF24_Remote.h"
 
@@ -14,6 +8,17 @@
 #include "Dist_Sensors.h"
 
 #define I2C_ADDRESS 0x3C
+#define ALIGNMENT_TOLERANCE 5       // Tolerance level for front sensor alignment (adjust as needed)
+#define TURN_SPEED 150              // Speed for turning adjustments (adjust as needed)
+#define SET_DISTANCE_RIGHT_WALL 30  // Desired distance from the right wall (adjust as needed)
+#define FORWARD_SPEED 200           // Speed for forward movement (adjust as needed)
+#define SET_DISTANCE_SIDE_SENSOR_TO_OPPOSING_WALL 30 // Replace with the desired distance threshold for the side sensor
+#define SET_DISTANCE_FROM_PEG_WALL 20 // Replace with the desired distance threshold for the front sensors to the peg wall
+
+
+
+// Update the logic to use these constants
+
 SSD1306AsciiWire oled;
 
 void setupScreen() {
@@ -96,34 +101,33 @@ void setup() {
   setup_distance_sensors(); 
 }
 
-int counter = 0;
 void loop() {
-  int i;
+  // Autonomous mode behavior
+  if (mode == MODE_AUTO) {
+    bool frontEqual = (distances[0] == distances[1]);  // Assuming front left sensor is distances[0], front right is distances[1]
+    bool sideAtSetDistance = (distances[2] == SET_DISTANCE_SIDE_SENSOR_TO_OPPOSING_WALL); // Using defined constant
+    bool frontAtPegWall = (distances[0] == SET_DISTANCE_FROM_PEG_WALL);  // Using defined constant
 
-  // Read and print distance sensor data
-  read_distance_sensors(); 
-
-  // Display sensor data on OLED every few loops to reduce screen flicker
-  counter++;
-  if (counter == 5) {
-    counter = 0;
-    for (i = 0; i < N_DIST_SENSORS; i++){
-      screenPrintNum(i+2, 2, 6, 0, distances[i]); // Update display with sensor distances
+    if (frontEqual) {
+      if (sideAtSetDistance) {
+        if (frontAtPegWall) {
+          // Move forward along the peg wall
+          motorRun(255, 255);
+        } else {
+          // Turn based on peg wall distance
+          motorRun(distances[0] > SET_DISTANCE_FROM_PEG_WALL ? 255 : -255, 
+                   distances[0] > SET_DISTANCE_FROM_PEG_WALL ? -255 : 255);
+        }
+      } else {
+        // Sharper turn based on side sensor distance
+        motorRun(distances[2] > SET_DISTANCE_SIDE_SENSOR_TO_OPPOSING_WALL ? 255 : -255, 
+                 distances[2] > SET_DISTANCE_SIDE_SENSOR_TO_OPPOSING_WALL ? -255 : 255);
+      }
+    } else {
+      // Adjust to equalize front sensor readings
+      motorRun(distances[0] > distances[1] ? 150 : -150, 
+               distances[0] > distances[1] ? -150 : 150);
     }
-  }
-
-  // Check for RF data and control car movement
-  if (getNrf24L01Data()) {
-    clearNrfFlag();
-
-    if (mode == MODE_MANUAL) {
-      manual(); // Calls function to control the car
-    } else if (mode == MODE_STOP) {
-      servo1.write(SERVO_STOP);
-      motorRun(0,0);  // Stop motors
-    }
-
-    lastNrfUpdateTime = millis(); // Reset timer for data update check
   }
 }
 
@@ -144,134 +148,3 @@ void manual() {
     servo1.write(91); //servo stops at 91
   }
 }  
-
-void autonomous_scheduler(int now) {
-  int endtime_prev = 0;
-  switch (autokey) {
-    case 1:
-      endtime_prev = do_auto(AUTO_MODE_READ_DISTANCE,     now,  endtime_prev, 300);
-      endtime_prev = do_auto(AUTO_MODE_READ_OFFSETS,     now,  endtime_prev, 300);
-      if (distances[SIDE_FRONT] < distances[REAR]){
-        do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 300);
-        do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
-        do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
-      } else if (distances[SIDE_FRONT] > distances[REAR]){
-        do_auto(AUTO_MODE_RIGHTTURN, now, endtime_prev, 300);
-        do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
-        do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
-      } else {
-        if (distances[SIDE_REAR] < 600){
-          do_auto(AUTO_MODE_BACKWARDS, now, endtime_prev, 300);
-          do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
-          do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
-        } else if(distances[SIDE_REAR] > 600){
-          do_auto(AUTO_MODE_GO_STRAIGHT_DIST, now, endtime_prev, 300);
-          do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
-          do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
-        } else {
-        }
-      }
-      //                            mode        current_time  start      duration
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_BACKWARD,  now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_RIGHTTURN, now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_LEFTTURN,  now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_SERVO_POS, now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_SERVO_NEG, now,  endtime_prev, 1500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 500);
-      break;
-    case 2:
-        //                    mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_READ_OFFSETS,     now,  endtime_prev, 3000);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,      now,  endtime_prev, 2000);
-      break;  
-
- //                    mode        current_time  start   duration
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD,  now,  endtime_prev,60);
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 12000);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,          now,  endtime_prev, 500);
-      // endtime_prev = do_auto(AUTO_MODE_END_AUTO,      now,  endtime_prev, 1000);
-
-      // endtime_prev = do_auto(AUTO_MODE_BACKWARD,   now,  endtime_prev, 500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,       now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_FORWARD,    now,  endtime_prev,      500);
-      // endtime_prev = do_auto(AUTO_MODE_STOP,       now,  endtime_prev, 1000);
-      // endtime_prev = do_auto(AUTO_MODE_END_AUTO,   now,  endtime_prev, 1000);
-      break;
-
-    case 3:
-     //                    mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_GO_STRAIGHT_DIST,     now,  endtime_prev, 10000);
-      endtime_prev = do_auto(AUTO_MODE_STOP,             now,  endtime_prev, 60);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,         now,  endtime_prev, 2000);
-      break;  
-  }
- 
-}
-
-int do_auto(int automode, int current_time,  int start_time, int duration) {
-
-  int stop_time = start_time + duration;
-
-  if (current_time > start_time  &&   current_time < stop_time)
-
-  switch (automode) {
-  case AUTO_MODE_STOP:
-      motorRun(0, 0);
-      servo1.write(SERVO_STOP);
-      break;
-  case AUTO_MODE_FORWARD:
-      motorRun(100, 70);
-      break;
-  case AUTO_MODE_FORWARD_SLOW:
-      motorRun(LEFT_SLOW, RIGHT_SLOW);
-      break;
-  case AUTO_MODE_BACKWARD:
-      motorRun(-150, -150);
-      break;
-  case AUTO_MODE_RIGHTTURN:
-      motorRun(200, -200);
-      break;
-  case AUTO_MODE_LEFTTURN:
-      motorRun(-185, 185);
-      break;
-  case AUTO_MODE_SERVO_POS:
-      motorRun(0, 0);
-      servo1.write(180);
-      break;
-  case AUTO_MODE_SERVO_NEG:
-      motorRun(0, 0);
-      servo1.write(0);
-      break;
-  case AUTO_MODE_GO_STRAIGHT_DIST:
-      gostraightDistance(dstart); 
-      break;
-  case AUTO_MODE_READ_OFFSETS:
-      read_calibration_offset();
-      break;
-  case AUTO_MODE_READ_DISTANCE:
-      read_distance_sensors();
-      break;
-  case AUTO_MODE_SHAKE:
-      shake();
-      break;
-  case AUTO_MODE_END_AUTO:
-      motorRun(0, 0);
-      servo1.write(SERVO_STOP);
-      mode = MODE_MANUAL;
-      printVoltage(2,1);
-      screenPrint(3,1,"Mode: Manual"); 
-      screenPrint(4,1," ");          
-      alarm(2, 1);               
-      break;
-  }  
-  return stop_time;
-}
-
-
-
