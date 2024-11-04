@@ -12,21 +12,21 @@ D1 = rf2( 1 - pow((( rf1 - rf2 ) / D ), 2) )
 theta-c = acos( D1 / rf2 ) 
 
 
-//LOOP WHOLE THING
+void loop() {
 if (theta-m == theta-c){
   //idk how to read from the sensors? but that would happen here rf1 and rf2
   if rf2 == xc2
     stop
   else
     motorRun(150, 150); 
-//need to loop this or run this until its equal
+//need to loop this or run this until its equal? or will that happen on its own?
 else { 
 if (theta-c > theta-m); {
-  motorRun(200, -200); 
+  motorRun(200, -200); //does there need to be a time constraint or something here?
 }
 else {
   motorRun(-200, 200);
 }
-
+}
 
 I need help <3 
