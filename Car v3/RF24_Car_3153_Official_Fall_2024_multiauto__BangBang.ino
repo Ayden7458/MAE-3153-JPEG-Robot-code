@@ -145,6 +145,133 @@ void manual() {
   }
 }  
 
+void autonomous_scheduler(int now) {
+  int endtime_prev = 0;
+  switch (autokey) {
+    case 1:
+      endtime_prev = do_auto(AUTO_MODE_READ_DISTANCE,     now,  endtime_prev, 300);
+      endtime_prev = do_auto(AUTO_MODE_READ_OFFSETS,     now,  endtime_prev, 300);
+      if (distances[SIDE_FRONT] < distances[REAR]){
+        do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 300);
+        do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
+        do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
+      } else if (distances[SIDE_FRONT] > distances[REAR]){
+        do_auto(AUTO_MODE_RIGHTTURN, now, endtime_prev, 300);
+        do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
+        do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
+      } else {
+        if (distances[SIDE_REAR] < 600){
+          do_auto(AUTO_MODE_BACKWARDS, now, endtime_prev, 300);
+          do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
+          do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
+        } else if(distances[SIDE_REAR] > 600){
+          do_auto(AUTO_MODE_GO_STRAIGHT_DIST, now, endtime_prev, 300);
+          do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
+          do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
+        } else {
+        }
+      }
+      //                            mode        current_time  start      duration
+      // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev, 1500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_BACKWARD,  now,  endtime_prev, 1500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_RIGHTTURN, now,  endtime_prev, 1500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_LEFTTURN,  now,  endtime_prev, 1500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_SERVO_POS, now,  endtime_prev, 1500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_SERVO_NEG, now,  endtime_prev, 1500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 500);
+      break;
+    case 2:
+        //                    mode        current_time  start   duration
+      endtime_prev = do_auto(AUTO_MODE_READ_OFFSETS,     now,  endtime_prev, 3000);
+      endtime_prev = do_auto(AUTO_MODE_END_AUTO,      now,  endtime_prev, 2000);
+      break;  
+
+ //                    mode        current_time  start   duration
+      // endtime_prev = do_auto(AUTO_MODE_FORWARD,  now,  endtime_prev,60);
+      // endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 12000);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,          now,  endtime_prev, 500);
+      // endtime_prev = do_auto(AUTO_MODE_END_AUTO,      now,  endtime_prev, 1000);
+
+      // endtime_prev = do_auto(AUTO_MODE_BACKWARD,   now,  endtime_prev, 500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,       now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_FORWARD,    now,  endtime_prev,      500);
+      // endtime_prev = do_auto(AUTO_MODE_STOP,       now,  endtime_prev, 1000);
+      // endtime_prev = do_auto(AUTO_MODE_END_AUTO,   now,  endtime_prev, 1000);
+      break;
+
+    case 3:
+     //                    mode        current_time  start   duration
+      endtime_prev = do_auto(AUTO_MODE_GO_STRAIGHT_DIST,     now,  endtime_prev, 10000);
+      endtime_prev = do_auto(AUTO_MODE_STOP,             now,  endtime_prev, 60);
+      endtime_prev = do_auto(AUTO_MODE_END_AUTO,         now,  endtime_prev, 2000);
+      break;  
+  }
+ 
+}
+
+int do_auto(int automode, int current_time,  int start_time, int duration) {
+
+  int stop_time = start_time + duration;
+
+  if (current_time > start_time  &&   current_time < stop_time)
+
+  switch (automode) {
+  case AUTO_MODE_STOP:
+      motorRun(0, 0);
+      servo1.write(SERVO_STOP);
+      break;
+  case AUTO_MODE_FORWARD:
+      motorRun(100, 70);
+      break;
+  case AUTO_MODE_FORWARD_SLOW:
+      motorRun(LEFT_SLOW, RIGHT_SLOW);
+      break;
+  case AUTO_MODE_BACKWARD:
+      motorRun(-150, -150);
+      break;
+  case AUTO_MODE_RIGHTTURN:
+      motorRun(200, -200);
+      break;
+  case AUTO_MODE_LEFTTURN:
+      motorRun(-185, 185);
+      break;
+  case AUTO_MODE_SERVO_POS:
+      motorRun(0, 0);
+      servo1.write(180);
+      break;
+  case AUTO_MODE_SERVO_NEG:
+      motorRun(0, 0);
+      servo1.write(0);
+      break;
+  case AUTO_MODE_GO_STRAIGHT_DIST:
+      gostraightDistance(dstart); 
+      break;
+  case AUTO_MODE_READ_OFFSETS:
+      read_calibration_offset();
+      break;
+  case AUTO_MODE_READ_DISTANCE:
+      read_distance_sensors();
+      break;
+  case AUTO_MODE_SHAKE:
+      shake();
+      break;
+  case AUTO_MODE_END_AUTO:
+      motorRun(0, 0);
+      servo1.write(SERVO_STOP);
+      mode = MODE_MANUAL;
+      printVoltage(2,1);
+      screenPrint(3,1,"Mode: Manual"); 
+      screenPrint(4,1," ");          
+      alarm(2, 1);               
+      break;
+  }  
+  return stop_time;
+}
 
 
 
