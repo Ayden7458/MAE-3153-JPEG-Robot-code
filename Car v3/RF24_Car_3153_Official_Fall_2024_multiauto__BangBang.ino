@@ -161,7 +161,7 @@ void autonomous_scheduler(int now) {
         do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
       } else {
         if (distances[SIDE_REAR] < 600){
-          do_auto(AUTO_MODE_BACKWARDS, now, endtime_prev, 300);
+          do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 300);
           do_auto(AUTO_MODE_READ_DISTANCE, now, endtime_prev, 300);
           do_auto(AUTO_MODE_READ_OFFSETS, now, endtime_prev, 300);
         } else if(distances[SIDE_REAR] > 600){
