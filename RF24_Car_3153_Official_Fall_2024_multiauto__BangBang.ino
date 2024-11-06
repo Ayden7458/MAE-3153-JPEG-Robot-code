@@ -70,6 +70,17 @@ Servo servo1;
 
 int mode, automode, autokey, start_time, current_time, delta_time;
 
+//RILEY VARIABLES
+float theta-m = ____; 
+int rf2desired = ____;
+int x = rf2desired - distance[rf2];  //do I need parenthesis here???
+int xc1 = ____; 
+int xc2 = ____; 
+int x2 = xc2 - distance[rf2]; 
+float D = 5.625; 
+float D1 = distance[rf2]( 1 - pow((( distance[rf1] - distance[rf2] ) / D ), 2) ) //rf2 and rf1 need to be replaced with distance sensor names
+float theta-c = acos( D1 / distance[rf2] )
+
 
 u32 lastNrfUpdateTime = 0;
 
@@ -200,12 +211,23 @@ void autonomous_scheduler(int now) {
   int endtime_prev = 0;
   switch (autokey) {
     case 1:
-   
+      if (theta-m == theta-c) { 
+        if (distance[X] == variablexc2) {
+          endtime_prev = do_auto(AUTO_MODE_STOP, now, endtime_prev, 1500);
+      } else { endtime_prev = do_auto(AUTO_MODE_FORWARD, now, endtime_prev, 1500);
+             } else { if (theta-c > theta-m) {
+          endtime_prev = do_auto(AUTO_MODE_RIGHTTURN, now, endtime_prev, 1500);
+        } else {  endtime_prev = do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 1500);
+               }
+              }
+    break; 
+
+      
      //                            mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 8000);
-      endtime_prev = do_auto(AUTO_MODE_SHAKE,         now,  endtime_prev, 3000);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,  now,  endtime_prev, 2000);
-      break;
+      //endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 8000);
+      //endtime_prev = do_auto(AUTO_MODE_SHAKE,         now,  endtime_prev, 3000);
+      //endtime_prev = do_auto(AUTO_MODE_END_AUTO,  now,  endtime_prev, 2000);
+     // break;
       // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev,      1500);
       // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
       // endtime_prev = do_auto(AUTO_MODE_BACKWARD,  now,  endtime_prev, 1500);
@@ -218,7 +240,7 @@ void autonomous_scheduler(int now) {
       // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
       // endtime_prev = do_auto(AUTO_MODE_SERVO_NEG, now,  endtime_prev, 1500);
       // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 500);
-      break;
+      //break;
     case 2:
         //                    mode        current_time  start   duration
       endtime_prev = do_auto(AUTO_MODE_READ_OFFSETS,     now,  endtime_prev, 3000);
