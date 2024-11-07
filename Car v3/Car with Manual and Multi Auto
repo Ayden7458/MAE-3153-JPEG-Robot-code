@@ -65,8 +65,9 @@ Servo servo1;
 #define AUTO_MODE_GO_STRAIGHT_DIST 10
 #define AUTO_MODE_SHAKE 11
 #define AUTO_MODE_END_AUTO 12
+#define AUTO_MODE_LEAN_LEFT 13
 
-#define SERVO_STOP 91
+#define SERVO_STOP 89
 
 int mode, automode, autokey, start_time, current_time, delta_time;
 
@@ -86,7 +87,7 @@ void setup() {
   mode = MODE_MANUAL;  //RDD
 
   setupScreen();   //RDD  Setup screen and print the group number and battery voltage
-  screenPrint(1,3,"Group 11");
+  screenPrint(1,3,"Group 3");
   printVoltage(2,1);
   screenPrint(3,1,"Mode: Manual");
   setup_distance_sensors(); 
@@ -187,24 +188,31 @@ void manual() {
   float servospeed = nrfDataRead[0] /1023.0;  // 1023.0 not 1023 
   //Serial.println(servospeed);
   if (nrfDataRead[5] == 0 ) {
-    servo1.write( int(91 + servospeed * 36));  // servo reaches max  positive speed at 127
+    servo1.write( int(89 + servospeed * 36));  // servo reaches max  positive speed at 127
   }  else if (nrfDataRead[6] == 0 ) {
-    servo1.write(int(91 - servospeed * 32));  // servo reaches max  negative speed at 63
+    servo1.write(int(89 - servospeed * 32));  // servo reaches max  negative speed at 63
   } else {
-    servo1.write(91); //servo stops at 91
+    servo1.write(89); //servo stops at 89
   }
 }
 
 
 void autonomous_scheduler(int now) {
   int endtime_prev = 0;
+  const int X1 = 30;
+  const int tolerance = 5;
+  const float diff = distances[SIDE_REAR] - distances[SIDE_FRONT];
   switch (autokey) {
     case 1:
    
      //                            mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW,  now,  endtime_prev, 8000);
-      endtime_prev = do_auto(AUTO_MODE_SHAKE,         now,  endtime_prev, 3000);
-      endtime_prev = do_auto(AUTO_MODE_END_AUTO,  now,  endtime_prev, 2000);
+      endtime_prev = do_auto(AUTO_MODE_READ_DISTANCE,  now,  endtime_prev, 100);
+      endtime_prev = do_auto(AUTO_MODE_LEAN_LEFT, now, endtime_prev, 3000);
+      endtime_prev = do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 2700);
+      endtime_prev = do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 1350);
+      endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW, now, endtime_prev, 3000);
+        
+      
       break;
       // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev,      1500);
       // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
@@ -272,7 +280,7 @@ int do_auto(int automode, int current_time,  int start_time, int duration) {
       motorRun(200, -200);
       break;
   case AUTO_MODE_LEFTTURN:
-      motorRun(-185, 185);
+      motorRun(-120, 120);
       break;
   case AUTO_MODE_SERVO_POS:
       motorRun(0, 0);
@@ -303,8 +311,9 @@ int do_auto(int automode, int current_time,  int start_time, int duration) {
       screenPrint(4,1," ");          
       alarm(2, 1);               
       break;
+  case AUTO_MODE_LEAN_LEFT:
+      motorRun(30, 220);
+      break;
   }  
   return stop_time;
 }
-
-
