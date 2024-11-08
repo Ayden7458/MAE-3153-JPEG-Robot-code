@@ -209,9 +209,8 @@ void autonomous_scheduler(int now) {
       endtime_prev = do_auto(AUTO_MODE_READ_DISTANCE,  now,  endtime_prev, 100);
       endtime_prev = do_auto(AUTO_MODE_LEAN_LEFT, now, endtime_prev, 3000);
       endtime_prev = do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 2700);
-      endtime_prev = do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 1350);
-      endtime_prev = do_auto(AUTO_MODE_FORWARD_SLOW, now, endtime_prev, 3000);
-        
+      endtime_prev = do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 1300);
+      endtime_prev = do_auto(AUTO_MODE_FORWARD, now, endtime_prev, 3000);
       
       break;
       // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev,      1500);
@@ -268,7 +267,7 @@ int do_auto(int automode, int current_time,  int start_time, int duration) {
       servo1.write(SERVO_STOP);
       break;
   case AUTO_MODE_FORWARD:
-      motorRun(100, 70);
+      motorRun(55, 50);
       break;
   case AUTO_MODE_FORWARD_SLOW:
       motorRun(LEFT_SLOW, RIGHT_SLOW);
