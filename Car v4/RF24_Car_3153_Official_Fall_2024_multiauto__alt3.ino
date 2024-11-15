@@ -206,12 +206,12 @@ void autonomous_scheduler(int now) {
     case 1:
    
      //                            mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_READ_DISTANCE,  now,  endtime_prev, 100);
       endtime_prev = do_auto(AUTO_MODE_LEAN_LEFT, now, endtime_prev, 3000);
-      endtime_prev = do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 2700);
-      endtime_prev = do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 1300);
-      endtime_prev = do_auto(AUTO_MODE_FORWARD, now, endtime_prev, 3000);
-      
+      endtime_prev = do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 2000);
+      endtime_prev = do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 1000);
+      endtime_prev = do_auto(AUTO_MODE_STOP, now, endtime_prev, 60);
+      endtime_prev = do_auto(AUTO_MODE_END_AUTO, now, endtime_prev, 60);
+
       break;
       // endtime_prev = do_auto(AUTO_MODE_FORWARD,   now,  endtime_prev,      1500);
       // endtime_prev = do_auto(AUTO_MODE_STOP,      now,  endtime_prev, 1000);
@@ -228,8 +228,13 @@ void autonomous_scheduler(int now) {
       break;
     case 2:
         //                    mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_SERVO_POS,     now,  endtime_prev, 7500);
-      endtime_prev = do_auto(AUTO_MODE_SERVO_NEG,      now,  endtime_prev, 7500);
+      endtime_prev = do_auto(AUTO_MODE_LEAN_LEFT, now, endtime_prev, 3000);
+      endtime_prev = do_auto(AUTO_MODE_LEFTTURN, now, endtime_prev, 2000);
+      endtime_prev = do_auto(AUTO_MODE_BACKWARD, now, endtime_prev, 1000);
+      endtime_prev = do_auto(AUTO_MODE_RIGHTTURN, now, endtime_prev, 200);
+      endtime_prev = do_auto(AUTO_MODE_FORWARD, now, endtime_prev, 3000);
+      
+
       break;  
 
  //                    mode        current_time  start   duration
@@ -247,7 +252,7 @@ void autonomous_scheduler(int now) {
 
     case 3:
      //                    mode        current_time  start   duration
-      endtime_prev = do_auto(AUTO_MODE_GO_STRAIGHT_DIST,     now,  endtime_prev, 10000);
+      endtime_prev = do_auto(AUTO_MODE_SHAKE,     now,  endtime_prev, 1500);
       endtime_prev = do_auto(AUTO_MODE_STOP,             now,  endtime_prev, 60);
       endtime_prev = do_auto(AUTO_MODE_END_AUTO,         now,  endtime_prev, 2000);
       break;  
@@ -267,7 +272,7 @@ int do_auto(int automode, int current_time,  int start_time, int duration) {
       servo1.write(SERVO_STOP);
       break;
   case AUTO_MODE_FORWARD:
-      motorRun(55, 50);
+      motorRun(85, 80);
       break;
   case AUTO_MODE_FORWARD_SLOW:
       motorRun(LEFT_SLOW, RIGHT_SLOW);
@@ -276,10 +281,10 @@ int do_auto(int automode, int current_time,  int start_time, int duration) {
       motorRun(-150, -150);
       break;
   case AUTO_MODE_RIGHTTURN:
-      motorRun(200, -200);
+      motorRun(110, -110);
       break;
   case AUTO_MODE_LEFTTURN:
-      motorRun(-120, 120);
+      motorRun(-110, 110);
       break;
   case AUTO_MODE_SERVO_POS:
       motorRun(0, 0);
@@ -311,7 +316,7 @@ int do_auto(int automode, int current_time,  int start_time, int duration) {
       alarm(2, 1);               
       break;
   case AUTO_MODE_LEAN_LEFT:
-      motorRun(30, 220);
+      motorRun(60, 230);
       break;
   
   }  
